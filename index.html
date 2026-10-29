@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Panel de gestión de clientes, turnos y atención en sala."
+    />
+    <meta name="theme-color" content="#eee6d6" />
+    <title>Atención al Cliente | Panel de gestión</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-copy">
+            <p class="eyebrow">Panel de gestión</p>
+            <h1>Atención al cliente</h1>
+            <p class="hero-copy">Organiza turnos y brinda una atención más ágil.</p>
+          </div>
+        </div>
+        <button id="reiniciarBtn" class="secondary-btn" type="button">
+          <span aria-hidden="true">↻</span>
+          Reiniciar sistema
+        </button>
+      </header>
+
+      <main class="layout">
+        <section class="panel form-panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Nuevo registro</p>
+              <h2>Registrar cliente</h2>
+            </div>
+            <span class="heading-icon" aria-hidden="true">＋</span>
+          </div>
+          <form id="clienteForm">
+            <div class="field-grid">
+              <label>
+                <span>Código</span>
+                <input id="codigo" type="text" placeholder="Ej. C-001" autocomplete="off" required />
+              </label>
+
+              <label>
+                <span>Nombre completo</span>
+                <input id="nombre" type="text" placeholder="Nombre del cliente" autocomplete="name" required />
+              </label>
+
+              <label>
+                <span>Edad</span>
+                <input id="edad" type="number" min="1" max="120" required />
+              </label>
+
+              <label>
+                <span>Tipo de servicio</span>
+                <select id="servicio" required>
+                  <option value="">Seleccionar</option>
+                  <option value="Caja">Caja</option>
+                  <option value="Créditos">Créditos</option>
+                  <option value="Plataforma">Plataforma</option>
+                  <option value="Consulta">Consulta</option>
+                  <option value="Atención general">Atención general</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="submit" class="primary-btn">
+              Registrar cliente <span aria-hidden="true">→</span>
+            </button>
+          </form>
+
+          <div class="actions-row queue-action">
+            <label>
+              <span>Cliente a encolar</span>
+              <select id="clienteSelect"></select>
+            </label>
+            <button id="encolarBtn" class="primary-btn" type="button">
+              Agregar a cola
+            </button>
+          </div>
+
+          <div class="actions-row compact">
+            <button id="atenderBtn" class="warning-btn" type="button">
+              <span aria-hidden="true">✓</span> Atender siguiente
+            </button>
+            <button id="popHistorialBtn" class="danger-btn" type="button">
+              <span aria-hidden="true">↶</span> Retirar del historial
+            </button>
+          </div>
+        </section>
+
+        <aside class="panel stats-panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Resumen de actividad</p>
+              <h2>Estadísticas</h2>
+            </div>
+            <span class="online-indicator"><span></span> En vivo</span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span>Total registrados</span>
+              <strong id="totalClientes">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Capacidad</span>
+              <strong id="capacidadArreglo">20</strong>
+            </div>
+            <div class="stat-card">
+              <span>En cola</span>
+              <strong id="totalCola">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Historial</span>
+              <strong id="totalHistorial">0</strong>
+            </div>
+          </div>
+
+          <div id="mensaje" class="message" role="status" aria-live="polite">
+            <span class="message-dot" aria-hidden="true"></span>
+            <span id="mensajeTexto">El sistema está listo para registrar clientes.</span>
+          </div>
+        </aside>
+      </main>
+
+      <section class="visual-grid">
+        <div class="panel visual-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Base de datos</p>
+              <h2>Clientes registrados</h2>
+            </div>
+            <span class="pill">Arreglo · 20 espacios</span>
+          </div>
+          <div id="arregloClientes" class="visual-box array-box"></div>
+        </div>
+
+        <div class="panel visual-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Orden de llegada</p>
+              <h2>Cola de espera</h2>
+            </div>
+            <span class="pill blue">FIFO</span>
+          </div>
+          <div id="colaClientes" class="visual-box queue-box"></div>
+        </div>
+
+        <div class="panel visual-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Últimas atenciones</p>
+              <h2>Historial</h2>
+            </div>
+            <span class="pill orange">LIFO</span>
+          </div>
+          <div id="historialAtenciones" class="visual-box stack-box"></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>Sistema de Gestión de Atención al Cliente</span>
+        <span class="footer-note">Proyecto integrador</span>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
