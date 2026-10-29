@@ -36,6 +36,10 @@ function actualizarEstadisticas() {
   totalHistorialEl.textContent = String(state.historial.length);
 }
 
+function actualizarCodigoControl() {
+  codigoInput.value = String(Math.min(state.clientes.length + 1, MAX_CLIENTES));
+}
+
 function renderClienteSelect() {
   clienteSelect.innerHTML = '<option value="">Seleccionar cliente</option>';
 
@@ -116,6 +120,7 @@ function renderHistorial() {
 }
 
 function render() {
+  actualizarCodigoControl();
   renderClienteSelect();
   renderArreglo();
   renderCola();
@@ -126,24 +131,18 @@ function render() {
 function registrarCliente(event) {
   event.preventDefault();
 
-  const codigo = codigoInput.value.trim();
+  const codigo = String(state.clientes.length + 1);
   const nombre = nombreInput.value.trim();
   const edad = Number(edadInput.value);
   const servicio = servicioSelect.value;
 
-  if (!codigo || !nombre || !servicio || !Number.isFinite(edad) || edad <= 0) {
+  if (!nombre || !servicio || !Number.isFinite(edad) || edad <= 0) {
     setMessage('Complete correctamente todos los campos del formulario.');
     return;
   }
 
   if (state.clientes.length >= MAX_CLIENTES) {
     setMessage('El arreglo de clientes está lleno. Máximo 20 registros.');
-    return;
-  }
-
-  const codigoDuplicado = state.clientes.some((cliente) => cliente.codigo.toLowerCase() === codigo.toLowerCase());
-  if (codigoDuplicado) {
-    setMessage('Ya existe un cliente con ese código. Ingrese uno distinto.');
     return;
   }
 
