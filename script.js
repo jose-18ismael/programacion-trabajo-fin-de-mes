@@ -27,7 +27,6 @@ const databaseAccessDialog = document.getElementById('databaseAccessDialog');
 const databaseAccessForm = document.getElementById('databaseAccessForm');
 const databasePinInput = document.getElementById('databasePin');
 const accessError = document.getElementById('accessError');
-const cancelAccessBtn = document.getElementById('cancelAccessBtn');
 const DATABASE_PIN = '0607';
 
 const totalClientesEl = document.getElementById('totalClientes');
@@ -54,12 +53,17 @@ function actualizarCodigoControl() {
 function renderClienteSelect() {
   clienteSelect.innerHTML = '<option value="">Seleccionar cliente</option>';
 
-  state.clientes.forEach((cliente) => {
-    const option = document.createElement('option');
-    option.value = cliente.codigo;
-    option.textContent = `${cliente.codigo} - ${cliente.nombre}`;
-    clienteSelect.appendChild(option);
-  });
+  state.clientes
+    .filter((cliente) => (
+      !cliente.atendido
+      && !state.cola.some((enCola) => enCola.codigo === cliente.codigo)
+    ))
+    .forEach((cliente) => {
+      const option = document.createElement('option');
+      option.value = cliente.codigo;
+      option.textContent = `${cliente.codigo} - ${cliente.nombre}`;
+      clienteSelect.appendChild(option);
+    });
 }
 
 function renderArreglo() {
@@ -205,6 +209,7 @@ function atenderCliente() {
   }
 
   const atendido = state.cola.shift();
+  atendido.atendido = true;
 
   const registro = {
     cliente: atendido.nombre,
@@ -284,7 +289,7 @@ mobileMenu.addEventListener('click', (event) => {
   }
 });
 document.getElementById('unlockDatabaseBtn').addEventListener('click', requestDatabaseAccess);
-cancelAccessBtn.addEventListener('click', () => databaseAccessDialog.close());
+databaseAccessDialog.addEventListener('cancel', (event) => event.preventDefault());
 databaseAccessForm.addEventListener('submit', (event) => {
   event.preventDefault();
 
@@ -299,4 +304,6 @@ databaseAccessForm.addEventListener('submit', (event) => {
   databasePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
+databaseAccessDialog.showModal();
+databasePinInput.focus();
 render();

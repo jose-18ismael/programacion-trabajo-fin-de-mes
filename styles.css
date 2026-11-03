@@ -553,10 +553,6 @@ select:focus {
   margin-top: 5px;
 }
 
-.access-dialog .secondary-btn {
-  display: inline-flex;
-}
-
 .panel-header {
   min-height: 48px;
   margin-bottom: 16px;
