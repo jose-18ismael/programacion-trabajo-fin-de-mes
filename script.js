@@ -18,6 +18,17 @@ const atenderBtn = document.getElementById('atenderBtn');
 const popHistorialBtn = document.getElementById('popHistorialBtn');
 const reiniciarBtn = document.getElementById('reiniciarBtn');
 const mensajeTexto = document.getElementById('mensajeTexto');
+const mobileResetBtn = document.getElementById('mobileResetBtn');
+const menuToggle = document.getElementById('menuToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+const databaseMenuLink = document.getElementById('databaseMenuLink');
+const databasePanel = document.getElementById('baseDatos');
+const databaseAccessDialog = document.getElementById('databaseAccessDialog');
+const databaseAccessForm = document.getElementById('databaseAccessForm');
+const databasePinInput = document.getElementById('databasePin');
+const accessError = document.getElementById('accessError');
+const cancelAccessBtn = document.getElementById('cancelAccessBtn');
+const DATABASE_PIN = '0607';
 
 const totalClientesEl = document.getElementById('totalClientes');
 const totalColaEl = document.getElementById('totalCola');
@@ -226,10 +237,66 @@ function reiniciarSistema() {
   render();
 }
 
+function closeMobileMenu() {
+  mobileMenu.hidden = true;
+  menuToggle.setAttribute('aria-expanded', 'false');
+  menuToggle.setAttribute('aria-label', 'Abrir menú');
+}
+
+function requestDatabaseAccess() {
+  if (!databasePanel.classList.contains('is-locked')) {
+    return;
+  }
+
+  databasePinInput.value = '';
+  accessError.hidden = true;
+  databaseAccessDialog.showModal();
+  databasePinInput.focus();
+}
+
 form.addEventListener('submit', registrarCliente);
 encolarBtn.addEventListener('click', agregarACola);
 atenderBtn.addEventListener('click', atenderCliente);
 popHistorialBtn.addEventListener('click', retirarUltimoHistorial);
 reiniciarBtn.addEventListener('click', reiniciarSistema);
+mobileResetBtn.addEventListener('click', () => {
+  closeMobileMenu();
+  reiniciarSistema();
+});
+menuToggle.addEventListener('click', () => {
+  const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
+  mobileMenu.hidden = isExpanded;
+  menuToggle.setAttribute('aria-expanded', String(!isExpanded));
+  menuToggle.setAttribute('aria-label', isExpanded ? 'Abrir menú' : 'Cerrar menú');
+});
+mobileMenu.addEventListener('click', (event) => {
+  if (event.target.closest('a') === databaseMenuLink) {
+    closeMobileMenu();
+    if (databasePanel.classList.contains('is-locked')) {
+      event.preventDefault();
+      requestDatabaseAccess();
+    }
+    return;
+  }
+
+  if (event.target.closest('a')) {
+    closeMobileMenu();
+  }
+});
+document.getElementById('unlockDatabaseBtn').addEventListener('click', requestDatabaseAccess);
+cancelAccessBtn.addEventListener('click', () => databaseAccessDialog.close());
+databaseAccessForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  if (databasePinInput.value !== DATABASE_PIN) {
+    accessError.hidden = false;
+    databasePinInput.select();
+    return;
+  }
+
+  databasePanel.classList.remove('is-locked');
+  databaseAccessDialog.close();
+  databasePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 render();

@@ -9,7 +9,7 @@
     />
     <meta name="theme-color" content="#eee6d6" />
     <title>Atención al Cliente | Panel de gestión</title>
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=3" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,14 +21,37 @@
             <p class="hero-copy">Organiza turnos y brinda una atención más ágil.</p>
           </div>
         </div>
+        <button
+          id="menuToggle"
+          class="menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobileMenu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <button id="reiniciarBtn" class="secondary-btn" type="button">
           <span aria-hidden="true">↻</span>
           Reiniciar sistema
         </button>
+        <nav id="mobileMenu" class="mobile-menu" aria-label="Navegación principal" hidden>
+          <a href="#registro">Registrar cliente</a>
+          <a href="#estadisticas">Estadísticas</a>
+          <a href="#baseDatos" id="databaseMenuLink">Base de datos</a>
+          <a href="#cola">Cola de espera</a>
+          <a href="#historial">Historial</a>
+          <button id="mobileResetBtn" class="secondary-btn" type="button">
+            <span aria-hidden="true">↻</span>
+            Reiniciar sistema
+          </button>
+        </nav>
       </header>
 
       <main class="layout">
-        <section class="panel form-panel">
+        <section id="registro" class="panel form-panel">
           <div class="section-heading">
             <div>
               <p class="section-kicker">Nuevo registro</p>
@@ -91,7 +114,7 @@
           </div>
         </section>
 
-        <aside class="panel stats-panel">
+        <aside id="estadisticas" class="panel stats-panel">
           <div class="section-heading">
             <div>
               <p class="section-kicker">Resumen de actividad</p>
@@ -126,18 +149,28 @@
       </main>
 
       <section class="visual-grid">
-        <div class="panel visual-panel">
-          <div class="panel-header">
-            <div>
-              <p class="section-kicker">Base de datos</p>
-              <h2>Clientes registrados</h2>
+        <div id="baseDatos" class="panel visual-panel database-panel is-locked">
+          <div id="databaseContent" class="database-content">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Base de datos</p>
+                <h2>Clientes registrados</h2>
+              </div>
+              <span class="pill">Arreglo · 20 espacios</span>
             </div>
-            <span class="pill">Arreglo · 20 espacios</span>
+            <div id="arregloClientes" class="visual-box array-box"></div>
           </div>
-          <div id="arregloClientes" class="visual-box array-box"></div>
+          <div class="database-locked" aria-live="polite">
+            <p class="section-kicker">Acceso protegido</p>
+            <h2>La base de datos está bloqueada</h2>
+            <p>Ingresa el PIN para consultar los clientes registrados.</p>
+            <button id="unlockDatabaseBtn" class="primary-btn" type="button">
+              Ingresar PIN
+            </button>
+          </div>
         </div>
 
-        <div class="panel visual-panel">
+        <div id="cola" class="panel visual-panel">
           <div class="panel-header">
             <div>
               <p class="section-kicker">Orden de llegada</p>
@@ -148,7 +181,7 @@
           <div id="colaClientes" class="visual-box queue-box"></div>
         </div>
 
-        <div class="panel visual-panel">
+        <div id="historial" class="panel visual-panel">
           <div class="panel-header">
             <div>
               <p class="section-kicker">Últimas atenciones</p>
@@ -166,6 +199,32 @@
       </footer>
     </div>
 
-    <script src="script.js?v=2"></script>
+    <dialog id="databaseAccessDialog" class="access-dialog" aria-labelledby="accessTitle">
+      <form id="databaseAccessForm">
+        <p class="section-kicker">Acceso protegido</p>
+        <h2 id="accessTitle">Ingresa tu PIN</h2>
+        <p>Necesitas el PIN para consultar la base de datos.</p>
+        <label for="databasePin">Contraseña</label>
+        <input
+          id="databasePin"
+          name="pin"
+          type="password"
+          inputmode="numeric"
+          pattern="[0-9]{4}"
+          maxlength="4"
+          autocomplete="off"
+          required
+        />
+        <p id="accessError" class="access-error" role="alert" hidden>
+          PIN incorrecto. Inténtalo de nuevo.
+        </p>
+        <div class="dialog-actions">
+          <button id="cancelAccessBtn" class="secondary-btn" type="button">Cancelar</button>
+          <button class="primary-btn" type="submit">Acceder</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="script.js?v=3"></script>
   </body>
 </html>
