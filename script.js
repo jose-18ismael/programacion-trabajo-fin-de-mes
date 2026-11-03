@@ -289,6 +289,7 @@ mobileMenu.addEventListener('click', (event) => {
   }
 });
 document.getElementById('unlockDatabaseBtn').addEventListener('click', requestDatabaseAccess);
+document.getElementById('cancelAccessBtn').addEventListener('click', () => databaseAccessDialog.close());
 databaseAccessDialog.addEventListener('cancel', (event) => event.preventDefault());
 databaseAccessForm.addEventListener('submit', (event) => {
   event.preventDefault();
