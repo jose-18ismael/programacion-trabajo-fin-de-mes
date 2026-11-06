@@ -1,375 +1,259 @@
 using System;
+using System.Collections.Generic;
 
 namespace SistemaAtencionCliente
 {
-    // Estructura para almacenar los datos del cliente
-    public struct Cliente
+    public class Cliente
     {
-        public string Codigo;
-        public string NombreCompleto;
+        public string Codigo = "";
+        public string NombreCompleto = "";
         public int Edad;
-        public string TipoServicio;
+        public string TipoServicio = "";
+        public string EspecialidadMedica = "";
         public int NumeroTurno;
+        public bool Atendido;
     }
 
     class Program
     {
-        // MÓDULO 1: Arreglos (Capacidad para al menos 20 clientes)
-        static Cliente[] arregloClientes = new Cliente[20];
-        static int contadorClientes = 0;
-
-        // MÓDULO 2: Colas (FIFO - First In, First Out) usando clases nativas simuladas o array/queue
-        // Usaremos System.Collections.Generic.Queue para cumplir con las facilidades de C# permitidas
-        static System.Collections.Generic.Queue<Cliente> colaEspera = new System.Collections.Generic.Queue<Cliente>();
-
-        // MÓDULO 3: Pilas (LIFO - Last In, First Out) para el historial de atenciones
-        static System.Collections.Generic.Stack<string> pilaHistorial = new System.Collections.Generic.Stack<string>();
+        const int Capacidad = 20;
+        static readonly Cliente[] clientes = new Cliente[Capacidad];
+        static readonly Queue<Cliente> cola = new Queue<Cliente>();
+        static readonly Stack<string> historial = new Stack<string>();
+        static int cantidad, siguienteTurno = 1;
 
         static void Main(string[] args)
         {
-            int opcion = 0;
-            do
+            while (true)
             {
-                Console.Clear();
-                Console.WriteLine("==================================================");
-                Console.WriteLine("   SISTEMA DE GESTIÓN DE ATENCIÓN AL CLIENTE      ");
-                Console.WriteLine("==================================================");
-                Console.WriteLine(" 1. Registrar cliente");
-                Console.WriteLine(" 2. Mostrar clientes registrados");
-                Console.WriteLine(" 3. Buscar cliente por código");
-                Console.WriteLine(" 4. Modificar información de cliente");
-                Console.WriteLine(" 5. Encolar cliente (Agregar a fila de espera)");
-                Console.WriteLine(" 6. Mostrar lista de espera (Cola)");
-                Console.WriteLine(" 7. Atender siguiente cliente (Dequeue)");
-                Console.WriteLine(" 8. Consultar próximo turno (Peek cola)");
-                Console.WriteLine(" 9. Ver historial de atenciones (Pila)");
-                Console.WriteLine("10. Retirar última operación del historial (Pop)");
-                Console.WriteLine("11. Ver estadísticas generales");
-                Console.WriteLine("12. Salir");
-                Console.WriteLine("==================================================");
-                Console.Write("Seleccione una opción (1-12): ");
-
-                if (int.TryParse(Console.ReadLine(), out opcion))
+                Menu();
+                var entrada = Console.ReadLine();
+                if (entrada == null) break;
+                int opcion;
+                if (!int.TryParse(entrada, out opcion))
                 {
-                    switch (opcion)
-                    {
-                        case 1:
-                            RegistrarCliente();
-                            break;
-                        case 2:
-                            MostrarClientes();
-                            break;
-                        case 3:
-                            BuscarCliente();
-                            break;
-                        case 4:
-                            ModificarCliente();
-                            break;
-                        case 5:
-                            EncolarCliente();
-                            break;
-                        case 6:
-                            MostrarCola();
-                            break;
-                        case 7:
-                            AtenderCliente();
-                            break;
-                        case 8:
-                            ConsultarProximoTurno();
-                            break;
-                        case 9:
-                            VerHistorial();
-                            break;
-                        case 10:
-                            RetirarHistorial();
-                            break;
-                        case 11:
-                            VerEstadisticas();
-                            break;
-                        case 12:
-                            Console.WriteLine("\n¡Gracias por usar el sistema! Saliendo...");
-                            break;
-                        default:
-                            Console.WriteLine("\nOpción inválida. Intente de nuevo.");
-                            break;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("\nPor favor, ingrese un número válido.");
+                    Console.WriteLine("Ingrese una opción válida.");
+                    Pausar();
+                    continue;
                 }
 
-                if (opcion != 12)
+                switch (opcion)
                 {
-                    Console.WriteLine("\nPresione cualquier tecla para continuar...");
-                    Console.ReadKey();
+                    case 1: Registrar(); break;
+                    case 2: ListarClientes(); break;
+                    case 3: Buscar(); break;
+                    case 4: Modificar(); break;
+                    case 5: Encolar(); break;
+                    case 6: ListarCola(); break;
+                    case 7: Atender(); break;
+                    case 8: VerProximoTurno(); break;
+                    case 9: VerHistorial(); break;
+                    case 10: VerUltimaOperacion(); break;
+                    case 11: RetirarHistorial(); break;
+                    case 12: Estadisticas(); break;
+                    case 13: return;
+                    default: Console.WriteLine("Opción fuera del menú."); break;
                 }
-
-            } while (opcion != 12);
+                Pausar();
+            }
         }
 
-        // --- MÓDULO 1: ARREGLOS ---
-
-        static void RegistrarCliente()
+        static void Menu()
         {
-            Console.Clear();
-            Console.WriteLine("--- REGISTRAR NUEVO CLIENTE ---");
+            if (!Console.IsInputRedirected) Console.Clear();
+            Console.WriteLine("\nSISTEMA DE ATENCIÓN HOSPITALARIA");
+            Console.WriteLine("ARREGLO: 1 Registrar | 2 Listar | 3 Buscar | 4 Modificar");
+            Console.WriteLine("COLA FIFO: 5 Encolar | 6 Ver cola | 7 Atender | 8 Próximo (Peek)");
+            Console.WriteLine("PILA LIFO: 9 Historial | 10 Último (Peek) | 11 Retirar (Pop)");
+            Console.WriteLine("12 Estadísticas | 13 Salir");
+            Console.Write("Opción: ");
+        }
 
-            if (contadorClientes >= 20)
+        static void Registrar()
+        {
+            if (cantidad == Capacidad)
             {
-                Console.WriteLine("El arreglo de clientes está lleno (máximo 20).");
+                Console.WriteLine("Arreglo lleno: máximo 20 pacientes.");
                 return;
             }
 
-            Console.Write("Ingrese código del cliente: ");
-            string codigo = Console.ReadLine();
-
-            // Validar duplicados
-            for (int i = 0; i < contadorClientes; i++)
-            {
-                if (arregloClientes[i].Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("Error: Ya existe un cliente registrado con ese código.");
-                    return;
-                }
-            }
-
-            Console.Write("Ingrese nombre completo: ");
-            string nombre = Console.ReadLine();
-
-            Console.Write("Ingrese edad: ");
-            int edad = int.Parse(Console.ReadLine());
-
-            Console.Write("Ingrese tipo de servicio (Ej. Caja, Créditos, Plataforma): ");
-            string servicio = Console.ReadLine();
-
-            int turno = contadorClientes + 1;
-
-            // Guardar en el arreglo
-            arregloClientes[contadorClientes] = new Cliente
+            string codigo = LeerTexto("Código: ");
+            if (Indice(codigo) >= 0) { Console.WriteLine("Ese código ya existe."); return; }
+            Cliente paciente = new Cliente
             {
                 Codigo = codigo,
-                NombreCompleto = nombre,
-                Edad = edad,
-                TipoServicio = servicio,
-                NumeroTurno = turno
+                NombreCompleto = LeerTexto("Nombre completo: "),
+                Edad = LeerEntero("Edad (1-120): ", 1, 120),
+                TipoServicio = LeerServicio(),
+                NumeroTurno = siguienteTurno++
             };
+            if (paciente.TipoServicio == "Consulta")
+                paciente.EspecialidadMedica = LeerTexto("Especialidad médica: ");
 
-            contadorClientes++;
-            Console.WriteLine($"\n¡Cliente registrado con éxito! Su número de turno asignado es: {turno}");
+            clientes[cantidad++] = paciente;
+            Console.WriteLine("Paciente registrado. Turno #{0}.", paciente.NumeroTurno);
         }
 
-        static void MostrarClientes()
+        static void ListarClientes()
         {
-            Console.Clear();
-            Console.WriteLine("--- CLIENTES REGISTRADOS EN EL ARREGLO ---");
-
-            if (contadorClientes == 0)
-            {
-                Console.WriteLine("No hay clientes registrados.");
-                return;
-            }
-
-            for (int i = 0; i < contadorClientes; i++)
-            {
-                Console.WriteLine($"[{i + 1}] Código: {arregloClientes[i].Codigo} | Nombre: {arregloClientes[i].NombreCompleto} | Edad: {arregloClientes[i].Edad} | Servicio: {arregloClientes[i].TipoServicio} | Turno: {arregloClientes[i].NumeroTurno}");
-            }
-            Console.WriteLine($"\nCantidad total de clientes: {contadorClientes} / 20");
+            if (cantidad == 0) { Console.WriteLine("No hay pacientes registrados."); return; }
+            for (int i = 0; i < cantidad; i++) MostrarCliente(clientes[i]);
+            Console.WriteLine("Total: {0}/{1}", cantidad, Capacidad);
         }
 
-        static void BuscarCliente()
+        static void Buscar()
         {
-            Console.Clear();
-            Console.WriteLine("--- BUSCAR CLIENTE POR CÓDIGO ---");
-            Console.Write("Ingrese el código a buscar: ");
-            string codigo = Console.ReadLine();
-
-            bool encontrado = false;
-            for (int i = 0; i < contadorClientes; i++)
-            {
-                if (arregloClientes[i].Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("\n¡Cliente encontrado!");
-                    Console.WriteLine($"Nombre: {arregloClientes[i].NombreCompleto}");
-                    Console.WriteLine($"Edad: {arregloClientes[i].Edad}");
-                    Console.WriteLine($"Servicio: {arregloClientes[i].TipoServicio}");
-                    Console.WriteLine($"Turno: {arregloClientes[i].NumeroTurno}");
-                    encontrado = true;
-                    break;
-                }
-            }
-
-            if (!encontrado)
-            {
-                Console.WriteLine("No se encontró ningún cliente con ese código.");
-            }
+            int indice = Indice(LeerTexto("Código a buscar: "));
+            if (indice < 0) Console.WriteLine("No se encontró ese código.");
+            else MostrarCliente(clientes[indice]);
         }
 
-        static void ModificarCliente()
+        static void Modificar()
         {
-            Console.Clear();
-            Console.WriteLine("--- MODIFICAR INFORMACIÓN DE CLIENTE ---");
-            Console.Write("Ingrese el código del cliente a modificar: ");
-            string codigo = Console.ReadLine();
-
-            bool encontrado = false;
-            for (int i = 0; i < contadorClientes; i++)
-            {
-                if (arregloClientes[i].Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine($"Cliente actual: {arregloClientes[i].NombreCompleto}");
-                    Console.Write("Ingrese nuevo nombre: ");
-                    arregloClientes[i].NombreCompleto = Console.ReadLine();
-
-                    Console.Write("Ingrese nueva edad: ");
-                    arregloClientes[i].Edad = int.Parse(Console.ReadLine());
-
-                    Console.Write("Ingrese nuevo tipo de servicio: ");
-                    arregloClientes[i].TipoServicio = Console.ReadLine();
-
-                    Console.WriteLine("\n¡Información modificada exitosamente!");
-                    encontrado = true;
-                    break;
-                }
-            }
-
-            if (!encontrado)
-            {
-                Console.WriteLine("No se encontró el cliente especificado.");
-            }
+            int indice = Indice(LeerTexto("Código del paciente: "));
+            if (indice < 0) { Console.WriteLine("No se encontró ese código."); return; }
+            Cliente paciente = clientes[indice];
+            paciente.NombreCompleto = LeerTexto("Nuevo nombre: ");
+            paciente.Edad = LeerEntero("Nueva edad (1-120): ", 1, 120);
+            paciente.TipoServicio = LeerServicio();
+            paciente.EspecialidadMedica = paciente.TipoServicio == "Consulta"
+                ? LeerTexto("Especialidad médica: ")
+                : "";
+            MostrarCliente(paciente);
         }
 
-        // --- MÓDULO 2: COLAS (FIFO) ---
-
-        static void EncolarCliente()
+        static void Encolar()
         {
-            Console.Clear();
-            Console.WriteLine("--- ENCOLAR CLIENTE (AGREGAR A FILA) ---");
-            Console.Write("Ingrese el código del cliente registrado que desea pasar a la cola: ");
-            string codigo = Console.ReadLine();
-
-            Cliente? clienteEncontrado = null;
-            for (int i = 0; i < contadorClientes; i++)
-            {
-                if (arregloClientes[i].Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase))
-                {
-                    clienteEncontrado = arregloClientes[i];
-                    break;
-                }
-            }
-
-            if (clienteEncontrado != null)
-            {
-                colaEspera.Enqueue(clienteEncontrado.Value);
-                Console.WriteLine($"\n¡Cliente {clienteEncontrado.Value.NombreCompleto} agregado a la cola de espera exitosamente (Enqueue)!");
-            }
-            else
-            {
-                Console.WriteLine("Error: Cliente no encontrado en el registro general. Debe registrarlo primero.");
-            }
+            int indice = Indice(LeerTexto("Código para agregar a la cola: "));
+            if (indice < 0) { Console.WriteLine("Registre primero al paciente."); return; }
+            Cliente paciente = clientes[indice];
+            if (paciente.Atendido) { Console.WriteLine("El paciente ya fue atendido."); return; }
+            if (EnCola(paciente.Codigo)) { Console.WriteLine("El paciente ya está en la cola."); return; }
+            cola.Enqueue(paciente);
+            Console.WriteLine("{0} agregado a la cola.", paciente.NombreCompleto);
         }
 
-        static void MostrarCola()
+        static void ListarCola()
         {
-            Console.Clear();
-            Console.WriteLine("--- LISTA DE ESPERA (COLA FIFO) ---");
-
-            if (colaEspera.Count == 0)
-            {
-                Console.WriteLine("La cola de espera está vacía.");
-                return;
-            }
-
-            int pos = 1;
-            foreach (var cliente in colaEspera)
-            {
-                Console.WriteLine($"{pos}. Turno #{cliente.NumeroTurno} - {cliente.NombreCompleto} ({cliente.TipoServicio})");
-                pos++;
-            }
-            Console.WriteLine($"\nClientes pendientes en cola: {colaEspera.Count}");
+            if (cola.Count == 0) { Console.WriteLine("La cola está vacía."); return; }
+            int lugar = 1;
+            foreach (Cliente paciente in cola)
+                Console.WriteLine("{0}. Turno #{1} | {2} | {3}", lugar++, paciente.NumeroTurno,
+                    paciente.NombreCompleto, Servicio(paciente));
+            Console.WriteLine("Pendientes: {0}", cola.Count);
         }
 
-        static void AtenderCliente()
+        static void Atender()
         {
-            Console.Clear();
-            Console.WriteLine("--- ATENDER AL SIGUIENTE CLIENTE (DEQUEUE) ---");
-
-            if (colaEspera.Count == 0)
-            {
-                Console.WriteLine("No hay clientes en la cola de espera (Cola vacía).");
-                return;
-            }
-
-            Cliente atendido = colaEspera.Dequeue();
-            Console.WriteLine($"¡Atendiendo ahora a: {atendido.NombreCompleto} (Turno #{atendido.NumeroTurno}) - Servicio: {atendido.TipoServicio}!");
-
-            // Guardar automáticamente en el historial de pilas (LIFO)
-            string registroHistorial = $"Atendido: {atendido.NombreCompleto} (Turno #{atendido.NumeroTurno}) - {atendido.TipoServicio}";
-            pilaHistorial.Push(registroHistorial);
-            Console.WriteLine("Operación registrada automáticamente en el historial (Pila).");
+            if (cola.Count == 0) { Console.WriteLine("La cola está vacía."); return; }
+            Cliente paciente = cola.Dequeue();
+            paciente.Atendido = true;
+            historial.Push(string.Format("Atendido: {0} | Código: {1} | Turno #{2} | {3} | {4}",
+                paciente.NombreCompleto, paciente.Codigo, paciente.NumeroTurno, Servicio(paciente),
+                DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
+            Console.WriteLine("{0} atendido y guardado en el historial.", paciente.NombreCompleto);
         }
 
-        static void ConsultarProximoTurno()
+        static void VerProximoTurno()
         {
-            Console.Clear();
-            Console.WriteLine("--- CONSULTAR PRÓXIMO TURNO (PEEK) ---");
-
-            if (colaEspera.Count == 0)
-            {
-                Console.WriteLine("La cola de espera está vacía.");
-                return;
-            }
-
-            Cliente proximo = colaEspera.Peek();
-            Console.WriteLine($"El próximo cliente en ser atendido es: {proximo.NombreCompleto} (Turno #{proximo.NumeroTurno}) - Servicio: {proximo.TipoServicio}");
+            if (cola.Count == 0) { Console.WriteLine("La cola está vacía."); return; }
+            Cliente paciente = cola.Peek();
+            Console.WriteLine("Siguiente turno #{0}: {1} ({2}).",
+                paciente.NumeroTurno, paciente.NombreCompleto, Servicio(paciente));
         }
-
-        // --- MÓDULO 3: PILAS (LIFO) ---
 
         static void VerHistorial()
         {
-            Console.Clear();
-            Console.WriteLine("--- HISTORIAL DE ATENCIONES (PILA LIFO) ---");
+            if (historial.Count == 0) { Console.WriteLine("El historial está vacío."); return; }
+            int lugar = 1;
+            foreach (string registro in historial)
+                Console.WriteLine("{0}. {1}{2}", lugar, registro, lugar++ == 1 ? " <-- TOPE" : "");
+        }
 
-            if (pilaHistorial.Count == 0)
-            {
-                Console.WriteLine("El historial está vacío.");
-                return;
-            }
-
-            int i = 1;
-            foreach (var operacion in pilaHistorial)
-            {
-                string topeEtiqueta = (i == 1) ? " <-- TOPE (Sale primero)" : "";
-                Console.WriteLine($"{i}. {operacion}{topeEtiqueta}");
-                i++;
-            }
+        static void VerUltimaOperacion()
+        {
+            if (historial.Count == 0) Console.WriteLine("El historial está vacío.");
+            else Console.WriteLine("Última operación: {0}", historial.Peek());
         }
 
         static void RetirarHistorial()
         {
-            Console.Clear();
-            Console.WriteLine("--- RETIRAR ÚLTIMA OPERACIÓN DEL HISTORIAL (POP) ---");
-
-            if (pilaHistorial.Count == 0)
-            {
-                Console.WriteLine("La pila de historial está vacía. No hay operaciones que retirar.");
-                return;
-            }
-
-            string retirada = pilaHistorial.Pop();
-            Console.WriteLine($"Se ha retirado del historial la última operación:\n=> {retirada}");
+            if (historial.Count == 0) Console.WriteLine("El historial está vacío.");
+            else Console.WriteLine("Operación retirada: {0}", historial.Pop());
         }
 
-        // --- FUNCIONALIDAD ADICIONAL (ESTADÍSTICAS) ---
-
-        static void VerEstadisticas()
+        static void Estadisticas()
         {
-            Console.Clear();
-            Console.WriteLine("--- ESTADÍSTICAS GENERALES DEL SISTEMA ---");
-            Console.WriteLine($"- Total de clientes registrados en el arreglo: {contadorClientes} / 20");
-            Console.WriteLine($"- Total de clientes pendientes en cola de espera: {colaEspera.Count}");
-            Console.WriteLine($"- Total de atenciones finalizadas en el historial (Pila): {pilaHistorial.Count}");
+            int atendidos = 0;
+            for (int i = 0; i < cantidad; i++)
+                if (clientes[i].Atendido) atendidos++;
+            Console.WriteLine("Registrados: {0}/{1} | En cola: {2} | Atendidos: {3} | Historial: {4}",
+                cantidad, Capacidad, cola.Count, atendidos, historial.Count);
+        }
+
+        static int Indice(string codigo)
+        {
+            for (int i = 0; i < cantidad; i++)
+                if (clientes[i].Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase)) return i;
+            return -1;
+        }
+
+        static bool EnCola(string codigo)
+        {
+            foreach (Cliente paciente in cola)
+                if (paciente.Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        static void MostrarCliente(Cliente paciente)
+        {
+            string estado = paciente.Atendido ? "Atendido" : EnCola(paciente.Codigo) ? "En espera" : "Registrado";
+            Console.WriteLine("Código: {0} | Nombre: {1} | Edad: {2} | Servicio: {3} | Turno: #{4} | {5}",
+                paciente.Codigo, paciente.NombreCompleto, paciente.Edad, Servicio(paciente),
+                paciente.NumeroTurno, estado);
+        }
+
+        static string Servicio(Cliente paciente)
+        {
+            return paciente.TipoServicio == "Consulta" && paciente.EspecialidadMedica != ""
+                ? "Consulta - " + paciente.EspecialidadMedica
+                : paciente.TipoServicio;
+        }
+
+        static string LeerTexto(string mensaje)
+        {
+            while (true)
+            {
+                Console.Write(mensaje);
+                var texto = Console.ReadLine();
+                if (texto == null) return "";
+                if (!string.IsNullOrWhiteSpace(texto)) return texto.Trim();
+                Console.WriteLine("El campo no puede quedar vacío.");
+            }
+        }
+
+        static int LeerEntero(string mensaje, int minimo, int maximo)
+        {
+            int numero;
+            while (!int.TryParse(LeerTexto(mensaje), out numero) || numero < minimo || numero > maximo)
+                Console.WriteLine("Ingrese un número entre {0} y {1}.", minimo, maximo);
+            return numero;
+        }
+
+        static string LeerServicio()
+        {
+            string[] servicios = { "Urgencias", "Consulta", "Laboratorio", "Farmacia", "Atención general" };
+            Console.WriteLine("1 Urgencias | 2 Consulta | 3 Laboratorio | 4 Farmacia | 5 Atención general");
+            return servicios[LeerEntero("Servicio (1-5): ", 1, servicios.Length) - 1];
+        }
+
+        static void Pausar()
+        {
+            if (!Console.IsInputRedirected)
+            {
+                Console.WriteLine("\nPresione una tecla para continuar...");
+                Console.ReadKey();
+            }
         }
     }
 }
