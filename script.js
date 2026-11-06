@@ -5,6 +5,7 @@ const state = {
   cola: [],
   historial: [],
   proximoTurno: 1,
+  clienteEncontrado: null,
 };
 
 const form = document.getElementById('clienteForm');
@@ -15,21 +16,27 @@ const servicioSelect = document.getElementById('servicio');
 const especialidadField = document.getElementById('especialidadField');
 const especialidadSelect = document.getElementById('especialidad');
 const clienteSelect = document.getElementById('clienteSelect');
+const buscarCodigoInput = document.getElementById('buscarCodigo');
+const buscarResultado = document.getElementById('buscarResultado');
+const editarBtn = document.getElementById('editarBtn');
+const editarClienteDialog = document.getElementById('editarClienteDialog');
+const editarClienteForm = document.getElementById('editarClienteForm');
+const editCodigoInput = document.getElementById('editCodigo');
+const editNombreInput = document.getElementById('editNombre');
+const editEdadInput = document.getElementById('editEdad');
+const editServicioSelect = document.getElementById('editServicio');
+const editEspecialidadField = document.getElementById('editEspecialidadField');
+const editEspecialidadSelect = document.getElementById('editEspecialidad');
 const encolarBtn = document.getElementById('encolarBtn');
 const atenderBtn = document.getElementById('atenderBtn');
+const consultarColaBtn = document.getElementById('consultarColaBtn');
+const consultarHistorialBtn = document.getElementById('consultarHistorialBtn');
 const popHistorialBtn = document.getElementById('popHistorialBtn');
 const reiniciarBtn = document.getElementById('reiniciarBtn');
 const mensajeTexto = document.getElementById('mensajeTexto');
 const mobileResetBtn = document.getElementById('mobileResetBtn');
 const menuToggle = document.getElementById('menuToggle');
 const mobileMenu = document.getElementById('mobileMenu');
-const databaseMenuLink = document.getElementById('databaseMenuLink');
-const databasePanel = document.getElementById('baseDatos');
-const databaseAccessDialog = document.getElementById('databaseAccessDialog');
-const databaseAccessForm = document.getElementById('databaseAccessForm');
-const databasePinInput = document.getElementById('databasePin');
-const accessError = document.getElementById('accessError');
-const DATABASE_PIN = '0607';
 
 const totalClientesEl = document.getElementById('totalClientes');
 const totalColaEl = document.getElementById('totalCola');
@@ -60,6 +67,20 @@ function actualizarCampoEspecialidad() {
   if (!esConsulta) {
     especialidadSelect.value = '';
   }
+}
+
+function actualizarCampoEspecialidadEdicion() {
+  const esConsulta = editServicioSelect.value === 'Consulta';
+  editEspecialidadField.hidden = !esConsulta;
+  editEspecialidadSelect.required = esConsulta;
+
+  if (!esConsulta) {
+    editEspecialidadSelect.value = '';
+  }
+}
+
+function describirCliente(cliente) {
+  return `Código: ${cliente.codigo} · ${cliente.nombre} · ${cliente.edad} años · ${cliente.servicio}${cliente.especialidad ? ` (${cliente.especialidad})` : ''} · Turno #${cliente.turno}`;
 }
 
 function actualizarEstadisticas() {
@@ -100,6 +121,7 @@ function renderArreglo() {
       slot.innerHTML = `
         <strong>${escapeHTML(cliente.nombre)}</strong>
         <small>${escapeHTML(cliente.codigo)}</small>
+        <small>${escapeHTML(cliente.edad)} años</small>
         <small>Turno #${escapeHTML(cliente.turno)}</small>
         <small>${escapeHTML(cliente.servicio)}</small>
         ${cliente.especialidad ? `<small>${escapeHTML(cliente.especialidad)}</small>` : ''}
@@ -145,7 +167,7 @@ function renderHistorial() {
     return;
   }
 
-  [...state.historial].reverse().forEach((registro, index) => {
+  [...state.historial].reverse().forEach((registro) => {
     const item = document.createElement('div');
     item.className = 'stack-item';
     item.innerHTML = `
@@ -175,7 +197,7 @@ function registrarCliente(event) {
   const servicio = servicioSelect.value;
   const especialidad = especialidadSelect.value;
 
-  if (!nombre || !servicio || !Number.isFinite(edad) || edad <= 0
+  if (!nombre || !servicio || !Number.isInteger(edad) || edad < 1 || edad > 120
     || (servicio === 'Consulta' && !especialidad)) {
     setMessage('Complete correctamente todos los campos del formulario.');
     return;
@@ -196,16 +218,77 @@ function registrarCliente(event) {
   };
 
   state.clientes.push(nuevoCliente);
-  if (servicio === 'Consulta') {
-    state.cola.push(nuevoCliente);
-  }
   state.proximoTurno += 1;
 
   form.reset();
   actualizarCampoEspecialidad();
-  setMessage(servicio === 'Consulta'
-    ? `Paciente ${nombre} registrado en ${especialidad} y agregado a la cola. Turno #${nuevoCliente.turno}.`
-    : `Paciente ${nombre} registrado con éxito. Turno asignado #${nuevoCliente.turno}.`);
+  setMessage(`Paciente ${nombre} registrado. Código ${nuevoCliente.codigo}, turno #${nuevoCliente.turno}. Agréguelo a la cola cuando esté listo.`);
+  render();
+}
+
+function buscarCliente() {
+  const codigo = buscarCodigoInput.value.trim();
+
+  if (!codigo) {
+    state.clienteEncontrado = null;
+    buscarResultado.textContent = 'Ingrese un código para buscar.';
+    editarBtn.hidden = true;
+    return;
+  }
+
+  const cliente = state.clientes.find((item) => item.codigo.toLowerCase() === codigo.toLowerCase());
+  state.clienteEncontrado = cliente || null;
+  editarBtn.hidden = !cliente;
+  buscarResultado.textContent = cliente
+    ? describirCliente(cliente)
+    : `No se encontró un cliente con el código ${codigo}.`;
+}
+
+function abrirEdicionCliente() {
+  const cliente = state.clienteEncontrado;
+  if (!cliente) {
+    setMessage('Busque un cliente registrado antes de modificarlo.');
+    return;
+  }
+
+  editCodigoInput.value = cliente.codigo;
+  editNombreInput.value = cliente.nombre;
+  editEdadInput.value = String(cliente.edad);
+  editServicioSelect.value = cliente.servicio;
+  editEspecialidadSelect.value = cliente.especialidad || '';
+  actualizarCampoEspecialidadEdicion();
+  editarClienteDialog.showModal();
+  editNombreInput.focus();
+}
+
+function guardarCambiosCliente(event) {
+  event.preventDefault();
+  const cliente = state.clienteEncontrado;
+  if (!cliente) {
+    editarClienteDialog.close();
+    setMessage('No se pudo encontrar el cliente que desea modificar.');
+    return;
+  }
+
+  const nombre = editNombreInput.value.trim();
+  const edad = Number(editEdadInput.value);
+  const servicio = editServicioSelect.value;
+  const especialidad = editEspecialidadSelect.value;
+  if (!nombre || !Number.isInteger(edad) || edad < 1 || edad > 120
+    || !servicio || (servicio === 'Consulta' && !especialidad)) {
+    setMessage('Revise el nombre, la edad y el tipo de servicio.');
+    return;
+  }
+
+  Object.assign(cliente, {
+    nombre,
+    edad,
+    servicio,
+    especialidad: servicio === 'Consulta' ? especialidad : '',
+  });
+  editarClienteDialog.close();
+  buscarResultado.textContent = describirCliente(cliente);
+  setMessage(`Información del cliente ${cliente.codigo} modificada correctamente.`);
   render();
 }
 
@@ -257,6 +340,26 @@ function atenderCliente() {
   render();
 }
 
+function consultarProximoTurno() {
+  if (state.cola.length === 0) {
+    setMessage('La cola está vacía. No hay un próximo turno para consultar.');
+    return;
+  }
+
+  const siguiente = state.cola[0];
+  setMessage(`Próximo turno (Peek): ${siguiente.nombre}, turno #${siguiente.turno} · ${siguiente.especialidad || siguiente.servicio}.`);
+}
+
+function consultarUltimaOperacion() {
+  if (state.historial.length === 0) {
+    setMessage('El historial está vacío. No hay una última operación para consultar.');
+    return;
+  }
+
+  const ultima = state.historial[state.historial.length - 1];
+  setMessage(`Última operación (Peek): ${ultima.cliente} · ${ultima.servicio} · ${ultima.descripcion}.`);
+}
+
 function retirarUltimoHistorial() {
   if (state.historial.length === 0) {
     setMessage('La pila de historial está vacía. No hay operaciones para retirar.');
@@ -273,6 +376,10 @@ function reiniciarSistema() {
   state.cola = [];
   state.historial = [];
   state.proximoTurno = 1;
+  state.clienteEncontrado = null;
+  buscarCodigoInput.value = '';
+  buscarResultado.textContent = 'Busca un cliente para consultar o modificar sus datos.';
+  editarBtn.hidden = true;
   setMessage('Sistema reiniciado. Todos los registros, cola e historial quedaron vacíos.');
   render();
 }
@@ -283,21 +390,23 @@ function closeMobileMenu() {
   menuToggle.setAttribute('aria-label', 'Abrir menú');
 }
 
-function requestDatabaseAccess() {
-  if (!databasePanel.classList.contains('is-locked')) {
-    return;
-  }
-
-  databasePinInput.value = '';
-  accessError.hidden = true;
-  databaseAccessDialog.showModal();
-  databasePinInput.focus();
-}
-
 servicioSelect.addEventListener('change', actualizarCampoEspecialidad);
 form.addEventListener('submit', registrarCliente);
+document.getElementById('buscarBtn').addEventListener('click', buscarCliente);
+buscarCodigoInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    buscarCliente();
+  }
+});
+editarBtn.addEventListener('click', abrirEdicionCliente);
+editServicioSelect.addEventListener('change', actualizarCampoEspecialidadEdicion);
+editarClienteForm.addEventListener('submit', guardarCambiosCliente);
+document.getElementById('cancelEditBtn').addEventListener('click', () => editarClienteDialog.close());
 encolarBtn.addEventListener('click', agregarACola);
 atenderBtn.addEventListener('click', atenderCliente);
+consultarColaBtn.addEventListener('click', consultarProximoTurno);
+consultarHistorialBtn.addEventListener('click', consultarUltimaOperacion);
 popHistorialBtn.addEventListener('click', retirarUltimoHistorial);
 reiniciarBtn.addEventListener('click', reiniciarSistema);
 mobileResetBtn.addEventListener('click', () => {
@@ -311,36 +420,8 @@ menuToggle.addEventListener('click', () => {
   menuToggle.setAttribute('aria-label', isExpanded ? 'Abrir menú' : 'Cerrar menú');
 });
 mobileMenu.addEventListener('click', (event) => {
-  if (event.target.closest('a') === databaseMenuLink) {
-    closeMobileMenu();
-    if (databasePanel.classList.contains('is-locked')) {
-      event.preventDefault();
-      requestDatabaseAccess();
-    }
-    return;
-  }
-
   if (event.target.closest('a')) {
     closeMobileMenu();
   }
 });
-document.getElementById('unlockDatabaseBtn').addEventListener('click', requestDatabaseAccess);
-document.getElementById('cancelAccessBtn').addEventListener('click', () => databaseAccessDialog.close());
-databaseAccessDialog.addEventListener('cancel', (event) => event.preventDefault());
-databaseAccessForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-
-  if (databasePinInput.value !== DATABASE_PIN) {
-    accessError.hidden = false;
-    databasePinInput.select();
-    return;
-  }
-
-  databasePanel.classList.remove('is-locked');
-  databaseAccessDialog.close();
-  databasePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-
-databaseAccessDialog.showModal();
-databasePinInput.focus();
 render();

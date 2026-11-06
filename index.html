@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Panel de gestión de clientes, turnos y atención en sala."
+      content="Simulador de arreglos, colas e historial para la atención hospitalaria."
     />
     <meta name="theme-color" content="#eee6d6" />
-    <title>Atención al Cliente | Panel de gestión</title>
-    <link rel="stylesheet" href="styles.css?v=3" />
+    <title>Atención hospitalaria | Panel de gestión</title>
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body>
     <div class="app-shell">
@@ -17,8 +17,8 @@
         <div class="brand">
           <div class="brand-copy">
             <p class="eyebrow">Panel de gestión</p>
-            <h1>Atención al cliente</h1>
-            <p class="hero-copy">Organiza turnos y brinda una atención más ágil.</p>
+            <h1>Atención hospitalaria</h1>
+            <p class="hero-copy">Registra pacientes, organiza turnos y consulta las atenciones.</p>
           </div>
         </div>
         <button
@@ -38,9 +38,9 @@
           Reiniciar sistema
         </button>
         <nav id="mobileMenu" class="mobile-menu" aria-label="Navegación principal" hidden>
-          <a href="#registro">Registrar cliente</a>
+          <a href="#registro">Registrar paciente</a>
           <a href="#estadisticas">Estadísticas</a>
-          <a href="#baseDatos" id="databaseMenuLink">Base de datos</a>
+          <a href="#baseDatos">Clientes registrados</a>
           <a href="#cola">Cola de espera</a>
           <a href="#historial">Historial</a>
           <button id="mobileResetBtn" class="secondary-btn" type="button">
@@ -80,9 +80,9 @@
                 <span>Tipo de servicio</span>
                 <select id="servicio" required>
                   <option value="">Seleccionar</option>
-                  <option value="Caja">Caja</option>
-                  <option value="Créditos">Créditos</option>
-                  <option value="Plataforma">Plataforma</option>
+                  <option value="Urgencias">Urgencias</option>
+                  <option value="Laboratorio">Laboratorio</option>
+                  <option value="Farmacia">Farmacia</option>
                   <option value="Consulta">Consulta</option>
                   <option value="Atención general">Atención general</option>
                 </select>
@@ -105,10 +105,20 @@
             <button type="submit" class="primary-btn">
               Registrar paciente <span aria-hidden="true">→</span>
             </button>
-            <p class="form-hint">
-              Las consultas médicas requieren especialidad y se agregan automáticamente a la cola FIFO.
-            </p>
+            <p class="form-hint">El registro guarda código, nombre, edad, servicio y turno en el arreglo.</p>
           </form>
+
+          <div class="actions-row search-action">
+            <label for="buscarCodigo">
+              <span>Buscar por código</span>
+              <input id="buscarCodigo" type="search" placeholder="Ej. 1" required />
+            </label>
+            <button id="buscarBtn" class="secondary-btn" type="button">Buscar</button>
+          </div>
+          <div class="search-result" aria-live="polite">
+            <p id="buscarResultado">Busca un cliente para consultar o modificar sus datos.</p>
+            <button id="editarBtn" class="secondary-btn" type="button" hidden>Modificar información</button>
+          </div>
 
           <div class="actions-row queue-action">
             <label>
@@ -165,47 +175,39 @@
       </main>
 
       <section class="visual-grid">
-        <div id="baseDatos" class="panel visual-panel database-panel is-locked">
-          <div id="databaseContent" class="database-content">
-            <div class="panel-header">
-              <div>
-                <p class="section-kicker">Base de datos</p>
-                <h2>Clientes registrados</h2>
-              </div>
-              <span class="pill">Arreglo · 20 espacios</span>
+        <div id="baseDatos" class="panel visual-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Módulo 1 · Arreglo</p>
+              <h2>Clientes registrados</h2>
             </div>
-            <div id="arregloClientes" class="visual-box array-box"></div>
+            <span class="pill">20 espacios</span>
           </div>
-          <div class="database-locked" aria-live="polite">
-            <p class="section-kicker">Acceso protegido</p>
-            <h2>La base de datos está bloqueada</h2>
-            <p>Ingresa el PIN para consultar los clientes registrados.</p>
-            <button id="unlockDatabaseBtn" class="primary-btn" type="button">
-              Ingresar PIN
-            </button>
-          </div>
+          <div id="arregloClientes" class="visual-box array-box"></div>
         </div>
 
         <div id="cola" class="panel visual-panel">
           <div class="panel-header">
             <div>
-              <p class="section-kicker">Orden de llegada</p>
+              <p class="section-kicker">Módulo 2 · Cola FIFO</p>
               <h2>Cola de espera</h2>
             </div>
             <span class="pill blue">FIFO</span>
           </div>
           <div id="colaClientes" class="visual-box queue-box"></div>
+          <button id="consultarColaBtn" class="secondary-btn peek-btn" type="button">Consultar próximo turno (Peek)</button>
         </div>
 
         <div id="historial" class="panel visual-panel">
           <div class="panel-header">
             <div>
-              <p class="section-kicker">Últimas atenciones</p>
+              <p class="section-kicker">Módulo 3 · Pila LIFO</p>
               <h2>Historial</h2>
             </div>
             <span class="pill orange">LIFO</span>
           </div>
           <div id="historialAtenciones" class="visual-box stack-box"></div>
+          <button id="consultarHistorialBtn" class="secondary-btn peek-btn" type="button">Consultar última operación (Peek)</button>
         </div>
       </section>
 
@@ -215,32 +217,44 @@
       </footer>
     </div>
 
-    <dialog id="databaseAccessDialog" class="access-dialog" aria-labelledby="accessTitle">
-      <form id="databaseAccessForm">
-        <p class="section-kicker">Acceso protegido</p>
-        <h2 id="accessTitle">Ingresa tu PIN</h2>
-        <p>Necesitas el PIN para consultar la base de datos.</p>
-        <label for="databasePin">Contraseña</label>
-        <input
-          id="databasePin"
-          name="pin"
-          type="password"
-          inputmode="numeric"
-          pattern="[0-9]{4}"
-          maxlength="4"
-          autocomplete="off"
-          required
-        />
-        <p id="accessError" class="access-error" role="alert" hidden>
-          PIN incorrecto. Inténtalo de nuevo.
-        </p>
+    <dialog id="editarClienteDialog" class="edit-dialog" aria-labelledby="editTitle">
+      <form id="editarClienteForm">
+        <p class="section-kicker">Módulo 1 · Arreglo</p>
+        <h2 id="editTitle">Modificar cliente</h2>
+        <label for="editCodigo">Código</label>
+        <input id="editCodigo" type="text" readonly />
+        <label for="editNombre">Nombre completo</label>
+        <input id="editNombre" type="text" autocomplete="name" required />
+        <label for="editEdad">Edad</label>
+        <input id="editEdad" type="number" min="1" max="120" required />
+        <label for="editServicio">Tipo de servicio</label>
+        <select id="editServicio" required>
+          <option value="">Seleccionar</option>
+          <option value="Urgencias">Urgencias</option>
+          <option value="Laboratorio">Laboratorio</option>
+          <option value="Farmacia">Farmacia</option>
+          <option value="Consulta">Consulta</option>
+          <option value="Atención general">Atención general</option>
+        </select>
+        <label id="editEspecialidadField" hidden>
+          <span>Especialidad médica</span>
+          <select id="editEspecialidad">
+            <option value="">Seleccionar especialidad</option>
+            <option value="Medicina general">Medicina general</option>
+            <option value="Pediatría">Pediatría</option>
+            <option value="Ginecología">Ginecología</option>
+            <option value="Odontología">Odontología</option>
+            <option value="Dermatología">Dermatología</option>
+            <option value="Otra especialidad">Otra especialidad</option>
+          </select>
+        </label>
         <div class="dialog-actions">
-          <button id="cancelAccessBtn" class="secondary-btn" type="button">Cancelar</button>
-          <button class="primary-btn" type="submit">Acceder</button>
+          <button id="cancelEditBtn" class="secondary-btn" type="button">Cancelar</button>
+          <button class="primary-btn" type="submit">Guardar cambios</button>
         </div>
       </form>
     </dialog>
 
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
   </body>
 </html>

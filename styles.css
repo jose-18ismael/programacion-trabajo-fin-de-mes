@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -364,6 +368,42 @@ select:focus {
   min-width: 150px;
 }
 
+.search-action .secondary-btn {
+  min-width: 100px;
+}
+
+.search-result {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.search-result p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.search-result .secondary-btn {
+  min-height: 38px;
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  font-size: 0.76rem;
+}
+
+.peek-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
 .actions-row.compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding-top: 0;
@@ -476,36 +516,7 @@ select:focus {
   padding: 21px;
 }
 
-.database-locked {
-  display: none;
-}
-
-.database-panel.is-locked .database-content {
-  display: none;
-}
-
-.database-panel.is-locked .database-locked {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 10px;
-  min-height: 210px;
-}
-
-.database-locked p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-.database-locked .section-kicker {
-  color: var(--primary);
-}
-
-.access-dialog {
+.edit-dialog {
   width: min(100% - 32px, 390px);
   border: 1px solid rgba(123, 111, 84, 0.22);
   border-radius: 18px;
@@ -515,50 +526,42 @@ select:focus {
   box-shadow: 0 22px 60px rgba(48, 42, 30, 0.22);
 }
 
-.access-dialog::backdrop {
+.edit-dialog::backdrop {
   background: rgba(38, 35, 28, 0.48);
   backdrop-filter: blur(3px);
 }
 
-.access-dialog form {
+.edit-dialog form {
   display: grid;
   gap: 12px;
 }
 
-.access-dialog .section-kicker,
-.access-dialog h2,
-.access-dialog p {
+.edit-dialog .section-kicker,
+.edit-dialog h2 {
   margin: 0;
 }
 
-.access-dialog .section-kicker {
+.edit-dialog .section-kicker {
   color: var(--primary);
 }
 
-.access-dialog form > p:not(.section-kicker, .access-error) {
-  color: var(--muted);
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.access-dialog label {
+.edit-dialog label {
   font-size: 0.82rem;
   font-weight: 700;
 }
 
-.access-dialog input {
+.edit-dialog input,
+.edit-dialog select {
   width: 100%;
   min-height: 46px;
   border: 1px solid var(--line);
   border-radius: 11px;
   padding: 10px 12px;
   background: #fff;
-  letter-spacing: 0.2em;
 }
 
-.access-error {
-  color: #b2485d;
-  font-size: 0.82rem;
+#editEspecialidadField[hidden] {
+  display: none;
 }
 
 .dialog-actions {
