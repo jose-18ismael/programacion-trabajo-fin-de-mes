@@ -12,6 +12,8 @@ const codigoInput = document.getElementById('codigo');
 const nombreInput = document.getElementById('nombre');
 const edadInput = document.getElementById('edad');
 const servicioSelect = document.getElementById('servicio');
+const especialidadField = document.getElementById('especialidadField');
+const especialidadSelect = document.getElementById('especialidad');
 const clienteSelect = document.getElementById('clienteSelect');
 const encolarBtn = document.getElementById('encolarBtn');
 const atenderBtn = document.getElementById('atenderBtn');
@@ -38,6 +40,26 @@ const historialAtencionesEl = document.getElementById('historialAtenciones');
 
 function setMessage(texto) {
   mensajeTexto.textContent = texto;
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character]);
+}
+
+function actualizarCampoEspecialidad() {
+  const esConsulta = servicioSelect.value === 'Consulta';
+  especialidadField.hidden = !esConsulta;
+  especialidadSelect.required = esConsulta;
+
+  if (!esConsulta) {
+    especialidadSelect.value = '';
+  }
 }
 
 function actualizarEstadisticas() {
@@ -76,10 +98,11 @@ function renderArreglo() {
     if (cliente) {
       slot.className = 'array-slot';
       slot.innerHTML = `
-        <strong>${cliente.nombre}</strong>
-        <small>${cliente.codigo}</small>
-        <small>Turno #${cliente.turno}</small>
-        <small>${cliente.servicio}</small>
+        <strong>${escapeHTML(cliente.nombre)}</strong>
+        <small>${escapeHTML(cliente.codigo)}</small>
+        <small>Turno #${escapeHTML(cliente.turno)}</small>
+        <small>${escapeHTML(cliente.servicio)}</small>
+        ${cliente.especialidad ? `<small>${escapeHTML(cliente.especialidad)}</small>` : ''}
       `;
     } else {
       slot.className = 'array-slot empty';
@@ -105,10 +128,10 @@ function renderCola() {
     const item = document.createElement('div');
     item.className = 'queue-item';
     item.innerHTML = `
-      <strong>${cliente.nombre}</strong>
-      <small>${cliente.codigo}</small>
-      <small>Turno #${cliente.turno}</small>
-      <small>${cliente.servicio}</small>
+      <strong>${escapeHTML(cliente.nombre)}</strong>
+      <small>${escapeHTML(cliente.codigo)}</small>
+      <small>Turno #${escapeHTML(cliente.turno)}</small>
+      <small>${escapeHTML(cliente.especialidad || cliente.servicio)}</small>
     `;
     colaClientesEl.appendChild(item);
   });
@@ -126,9 +149,9 @@ function renderHistorial() {
     const item = document.createElement('div');
     item.className = 'stack-item';
     item.innerHTML = `
-      <strong>${registro.cliente}</strong>
-      <small>${registro.servicio}</small>
-      <small>${registro.descripcion}</small>
+      <strong>${escapeHTML(registro.cliente)}</strong>
+      <small>${escapeHTML(registro.servicio)}</small>
+      <small>${escapeHTML(registro.descripcion)}</small>
     `;
     historialAtencionesEl.appendChild(item);
   });
@@ -150,8 +173,10 @@ function registrarCliente(event) {
   const nombre = nombreInput.value.trim();
   const edad = Number(edadInput.value);
   const servicio = servicioSelect.value;
+  const especialidad = especialidadSelect.value;
 
-  if (!nombre || !servicio || !Number.isFinite(edad) || edad <= 0) {
+  if (!nombre || !servicio || !Number.isFinite(edad) || edad <= 0
+    || (servicio === 'Consulta' && !especialidad)) {
     setMessage('Complete correctamente todos los campos del formulario.');
     return;
   }
@@ -166,14 +191,21 @@ function registrarCliente(event) {
     nombre,
     edad,
     servicio,
+    especialidad: servicio === 'Consulta' ? especialidad : '',
     turno: state.proximoTurno,
   };
 
   state.clientes.push(nuevoCliente);
+  if (servicio === 'Consulta') {
+    state.cola.push(nuevoCliente);
+  }
   state.proximoTurno += 1;
 
   form.reset();
-  setMessage(`Cliente ${nombre} registrado con éxito. Turno asignado #${nuevoCliente.turno}.`);
+  actualizarCampoEspecialidad();
+  setMessage(servicio === 'Consulta'
+    ? `Paciente ${nombre} registrado en ${especialidad} y agregado a la cola. Turno #${nuevoCliente.turno}.`
+    : `Paciente ${nombre} registrado con éxito. Turno asignado #${nuevoCliente.turno}.`);
   render();
 }
 
@@ -213,8 +245,11 @@ function atenderCliente() {
 
   const registro = {
     cliente: atendido.nombre,
-    servicio: atendido.servicio,
-    descripcion: `Atendido y registrado en historial`,
+    servicio: atendido.especialidad || atendido.servicio,
+    descripcion: `Atendido · ${new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date())}`,
   };
 
   state.historial.push(registro);
@@ -259,6 +294,7 @@ function requestDatabaseAccess() {
   databasePinInput.focus();
 }
 
+servicioSelect.addEventListener('change', actualizarCampoEspecialidad);
 form.addEventListener('submit', registrarCliente);
 encolarBtn.addEventListener('click', agregarACola);
 atenderBtn.addEventListener('click', atenderCliente);

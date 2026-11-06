@@ -55,7 +55,7 @@
           <div class="section-heading">
             <div>
               <p class="section-kicker">Nuevo registro</p>
-              <h2>Registrar cliente</h2>
+              <h2>Registrar paciente</h2>
             </div>
             <span class="heading-icon" aria-hidden="true">＋</span>
           </div>
@@ -68,7 +68,7 @@
 
               <label>
                 <span>Nombre completo</span>
-                <input id="nombre" type="text" placeholder="Nombre del cliente" autocomplete="name" required />
+                <input id="nombre" type="text" placeholder="Nombre del paciente" autocomplete="name" required />
               </label>
 
               <label>
@@ -87,16 +87,32 @@
                   <option value="Atención general">Atención general</option>
                 </select>
               </label>
+
+              <label id="especialidadField" class="field-span" hidden>
+                <span>Especialidad médica</span>
+                <select id="especialidad">
+                  <option value="">Seleccionar especialidad</option>
+                  <option value="Medicina general">Medicina general</option>
+                  <option value="Pediatría">Pediatría</option>
+                  <option value="Ginecología">Ginecología</option>
+                  <option value="Odontología">Odontología</option>
+                  <option value="Dermatología">Dermatología</option>
+                  <option value="Otra especialidad">Otra especialidad</option>
+                </select>
+              </label>
             </div>
 
             <button type="submit" class="primary-btn">
-              Registrar cliente <span aria-hidden="true">→</span>
+              Registrar paciente <span aria-hidden="true">→</span>
             </button>
+            <p class="form-hint">
+              Las consultas médicas requieren especialidad y se agregan automáticamente a la cola FIFO.
+            </p>
           </form>
 
           <div class="actions-row queue-action">
             <label>
-              <span>Cliente a encolar</span>
+              <span>Paciente a encolar</span>
               <select id="clienteSelect"></select>
             </label>
             <button id="encolarBtn" class="primary-btn" type="button">
@@ -106,7 +122,7 @@
 
           <div class="actions-row compact">
             <button id="atenderBtn" class="warning-btn" type="button">
-              <span aria-hidden="true">✓</span> Atender siguiente
+              <span aria-hidden="true">✓</span> Atender siguiente paciente
             </button>
             <button id="popHistorialBtn" class="danger-btn" type="button">
               <span aria-hidden="true">↶</span> Retirar del historial
